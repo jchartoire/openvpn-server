@@ -297,7 +297,7 @@ function installQuestions() {
 	echo ""
 	echo "Votre serveur est-il derrière un NAT ou un routeur qui utilise un port public différent du port interne d'OpenVPN ?"
 	until [[ $USE_PUBLIC_PORT =~ ^(y|n)$ ]]; do
-		read -rp "Voulez-vous spécifier un port public différent ? (y/n): " -e USE_PUBLIC_PORT
+		read -rp "Voulez-vous spécifier un port public différent ? (y/n): " -e -i n USE_PUBLIC_PORT
 	done
 
 	if [[ $USE_PUBLIC_PORT == "y" ]]; then
