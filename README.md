@@ -19,7 +19,7 @@ Téléchargez et exécutez le script d'installation (assurez-vous d’avoir les 
 
 ```bash
 cd /root/
-curl -O https://raw.githubusercontent.com/jchartoire/openvpn-server/master/openvpn-install.sh
+curl -H "Cache-Control: no-cache" -O https://raw.githubusercontent.com/jchartoire/openvpn-server/master/openvpn-install.sh
 chmod +x openvpn-install.sh
 ./openvpn-install.sh
 ```
@@ -49,17 +49,17 @@ cd /root/
 ./openvpn-install.sh
 ```
 
-```bash
-Welcome to OpenVPN-install!
-The git repository is available at: https://github.com/jchartoire/openvpn-server/
-It looks like OpenVPN is already installed.
-What do you want to do?
- 1) Add a new user
- 2) Revoke existing user
- 3) Remove OpenVPN
- 4) Exit
-Select an option [1-4]: 1
-```
+><pre>
+>Welcome to OpenVPN-install!
+>The git repository is available at: https://github.com/jchartoire/openvpn-server/&NewLine;
+>It looks like OpenVPN is already installed.&NewLine;
+>What do you want to do?
+> 1) Add a new user
+> 2) Revoke existing user
+> 3) Remove OpenVPN
+> 4) Exit
+>Select an option [1-4]: 1
+></pre>
 
 ### Création d'un nouvel utilisateur
 
