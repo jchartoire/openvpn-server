@@ -112,8 +112,8 @@ function installUnbound() {
 			apt-get install -y unbound
 
 			# Configuration
-			echo 'interface: 10.8.0.1
-access-control: 10.8.0.1/24 allow
+			echo 'interface: 10.134.0.1
+access-control: 10.134.0.1/16 allow
 hide-identity: yes
 hide-version: yes
 use-caps-for-id: yes
@@ -123,8 +123,8 @@ prefetch: yes' >>/etc/unbound/unbound.conf
 			yum install -y unbound
 
 			# Configuration
-			sed -i 's|# interface: 0.0.0.0$|interface: 10.8.0.1|' /etc/unbound/unbound.conf
-			sed -i 's|# access-control: 127.0.0.0/8 allow|access-control: 10.8.0.1/24 allow|' /etc/unbound/unbound.conf
+			sed -i 's|# interface: 0.0.0.0$|interface: 10.134.0.1|' /etc/unbound/unbound.conf
+			sed -i 's|# access-control: 127.0.0.0/8 allow|access-control: 10.134.0.1/16 allow|' /etc/unbound/unbound.conf
 			sed -i 's|# hide-identity: no|hide-identity: yes|' /etc/unbound/unbound.conf
 			sed -i 's|# hide-version: no|hide-version: yes|' /etc/unbound/unbound.conf
 			sed -i 's|use-caps-for-id: no|use-caps-for-id: yes|' /etc/unbound/unbound.conf
@@ -133,8 +133,8 @@ prefetch: yes' >>/etc/unbound/unbound.conf
 			dnf install -y unbound
 
 			# Configuration
-			sed -i 's|# interface: 0.0.0.0$|interface: 10.8.0.1|' /etc/unbound/unbound.conf
-			sed -i 's|# access-control: 127.0.0.0/8 allow|access-control: 10.8.0.1/24 allow|' /etc/unbound/unbound.conf
+			sed -i 's|# interface: 0.0.0.0$|interface: 10.134.0.1|' /etc/unbound/unbound.conf
+			sed -i 's|# access-control: 127.0.0.0/8 allow|access-control: 10.134.0.1/16 allow|' /etc/unbound/unbound.conf
 			sed -i 's|# hide-identity: no|hide-identity: yes|' /etc/unbound/unbound.conf
 			sed -i 's|# hide-version: no|hide-version: yes|' /etc/unbound/unbound.conf
 			sed -i 's|# use-caps-for-id: no|use-caps-for-id: yes|' /etc/unbound/unbound.conf
@@ -156,8 +156,8 @@ prefetch: yes' >>/etc/unbound/unbound.conf
 	directory: "/etc/unbound"
 	trust-anchor-file: trusted-key.key
 	root-hints: root.hints
-	interface: 10.8.0.1
-	access-control: 10.8.0.1/24 allow
+	interface: 10.134.0.1
+	access-control: 10.134.0.1/16 allow
 	port: 53
 	num-threads: 2
 	use-caps-for-id: yes
@@ -191,8 +191,8 @@ private-address: ::ffff:0:0/96" >>/etc/unbound/unbound.conf
 
 		# Add Unbound 'server' for the OpenVPN subnet
 		echo 'server:
-interface: 10.8.0.1
-access-control: 10.8.0.1/24 allow
+interface: 10.134.0.1
+access-control: 10.134.0.1/16 allow
 hide-identity: yes
 hide-version: yes
 use-caps-for-id: yes
@@ -218,7 +218,7 @@ access-control: fd42:42:42:42::/112 allow' >>/etc/unbound/openvpn.conf
 
 function installQuestions() {
 	echo "Welcome to the OpenVPN installer!"
-	echo "The git repository is available at: https://github.com/angristan/openvpn-install"
+	echo "The git repository is available at: https://github.com/jchartoire/openvpn-server/"
 	echo ""
 
 	echo "I need to ask you a few questions before starting the setup."
@@ -295,6 +295,22 @@ function installQuestions() {
 		;;
 	esac
 	echo ""
+	echo "Votre serveur est-il derrière un NAT ou un routeur qui utilise un port public différent du port interne d'OpenVPN ?"
+	until [[ $USE_PUBLIC_PORT =~ ^(y|n)$ ]]; do
+		read -rp "Voulez-vous spécifier un port public différent ? (y/n): " -e USE_PUBLIC_PORT
+	done
+
+	if [[ $USE_PUBLIC_PORT == "y" ]]; then
+		until [[ $PUBLIC_PORT =~ ^[0-9]+$ ]] && [ "$PUBLIC_PORT" -ge 1 ] && [ "$PUBLIC_PORT" -le 65535 ]; do
+			read -rp "Port public [1-65535]: " -e PUBLIC_PORT
+		done
+	else
+		# Si l'utilisateur ne veut pas spécifier un port public différent,
+		# utilisez le port interne comme port public par défaut.
+		PUBLIC_PORT=$PORT
+	fi
+	echo ""
+	echo ""
 	echo "What protocol do you want OpenVPN to use?"
 	echo "UDP is faster. Unless it is not available, you shouldn't use TCP."
 	echo "   1) UDP"
@@ -326,7 +342,7 @@ function installQuestions() {
 	echo "   12) NextDNS (Anycast: worldwide)"
 	echo "   13) Custom"
 	until [[ $DNS =~ ^[0-9]+$ ]] && [ "$DNS" -ge 1 ] && [ "$DNS" -le 13 ]; do
-		read -rp "DNS [1-12]: " -e -i 11 DNS
+		read -rp "DNS [1-12]: " -e -i 8 DNS
 		if [[ $DNS == 2 ]] && [[ -e /etc/unbound/unbound.conf ]]; then
 			echo ""
 			echo "Unbound is already installed."
@@ -391,25 +407,25 @@ function installQuestions() {
 	done
 	if [[ $CUSTOMIZE_ENC == "n" ]]; then
 		# Use default, sane and fast parameters
-		CIPHER="AES-128-GCM"
+		CIPHER="AES-256-GCM"
 		CERT_TYPE="1" # ECDSA
 		CERT_CURVE="prime256v1"
-		CC_CIPHER="TLS-ECDHE-ECDSA-WITH-AES-128-GCM-SHA256"
+		CC_CIPHER="TLS-ECDHE-ECDSA-WITH-AES-256-GCM-SHA384"
 		DH_TYPE="1" # ECDH
 		DH_CURVE="prime256v1"
-		HMAC_ALG="SHA256"
+		HMAC_ALG="SHA512"
 		TLS_SIG="1" # tls-crypt
 	else
 		echo ""
 		echo "Choose which cipher you want to use for the data channel:"
-		echo "   1) AES-128-GCM (recommended)"
+		echo "   1) AES-128-GCM"
 		echo "   2) AES-192-GCM"
-		echo "   3) AES-256-GCM"
+		echo "   3) AES-256-GCM (recommended)"
 		echo "   4) AES-128-CBC"
 		echo "   5) AES-192-CBC"
 		echo "   6) AES-256-CBC"
 		until [[ $CIPHER_CHOICE =~ ^[1-6]$ ]]; do
-			read -rp "Cipher [1-6]: " -e -i 1 CIPHER_CHOICE
+			read -rp "Cipher [1-6]: " -e -i 3 CIPHER_CHOICE
 		done
 		case $CIPHER_CHOICE in
 		1)
@@ -463,11 +479,11 @@ function installQuestions() {
 		2)
 			echo ""
 			echo "Choose which size you want to use for the certificate's RSA key:"
-			echo "   1) 2048 bits (recommended)"
-			echo "   2) 3072 bits"
+			echo "   1) 2048 bits"
+			echo "   2) 3072 bits (recommended)"
 			echo "   3) 4096 bits"
 			until [[ $RSA_KEY_SIZE_CHOICE =~ ^[1-3]$ ]]; do
-				read -rp "RSA key size [1-3]: " -e -i 1 RSA_KEY_SIZE_CHOICE
+				read -rp "RSA key size [1-3]: " -e -i 2 RSA_KEY_SIZE_CHOICE
 			done
 			case $RSA_KEY_SIZE_CHOICE in
 			1)
@@ -486,10 +502,10 @@ function installQuestions() {
 		echo "Choose which cipher you want to use for the control channel:"
 		case $CERT_TYPE in
 		1)
-			echo "   1) ECDHE-ECDSA-AES-128-GCM-SHA256 (recommended)"
-			echo "   2) ECDHE-ECDSA-AES-256-GCM-SHA384"
+			echo "   1) ECDHE-ECDSA-AES-128-GCM-SHA256"
+			echo "   2) ECDHE-ECDSA-AES-256-GCM-SHA384 (recommended)"
 			until [[ $CC_CIPHER_CHOICE =~ ^[1-2]$ ]]; do
-				read -rp"Control channel cipher [1-2]: " -e -i 1 CC_CIPHER_CHOICE
+				read -rp"Control channel cipher [1-2]: " -e -i 2 CC_CIPHER_CHOICE
 			done
 			case $CC_CIPHER_CHOICE in
 			1)
@@ -504,7 +520,7 @@ function installQuestions() {
 			echo "   1) ECDHE-RSA-AES-128-GCM-SHA256 (recommended)"
 			echo "   2) ECDHE-RSA-AES-256-GCM-SHA384"
 			until [[ $CC_CIPHER_CHOICE =~ ^[1-2]$ ]]; do
-				read -rp"Control channel cipher [1-2]: " -e -i 1 CC_CIPHER_CHOICE
+				read -rp"Control channel cipher [1-2]: " -e -i 2 CC_CIPHER_CHOICE
 			done
 			case $CC_CIPHER_CHOICE in
 			1)
@@ -782,7 +798,7 @@ persist-key
 persist-tun
 keepalive 10 120
 topology subnet
-server 10.8.0.0 255.255.255.0
+server 10.134.0.0 255.255.0.0
 ifconfig-pool-persist ipp.txt" >>/etc/openvpn/server.conf
 
 	# DNS resolvers
@@ -804,7 +820,7 @@ ifconfig-pool-persist ipp.txt" >>/etc/openvpn/server.conf
 		done
 		;;
 	2) # Self-hosted DNS resolver (Unbound)
-		echo 'push "dhcp-option DNS 10.8.0.1"' >>/etc/openvpn/server.conf
+		echo 'push "dhcp-option DNS 10.134.0.1"' >>/etc/openvpn/server.conf
 		if [[ $IPV6_SUPPORT == 'y' ]]; then
 			echo 'push "dhcp-option DNS fd42:42:42:42::1"' >>/etc/openvpn/server.conf
 		fi
@@ -964,7 +980,7 @@ verb 3" >>/etc/openvpn/server.conf
 
 	# Script to add rules
 	echo "#!/bin/sh
-iptables -t nat -I POSTROUTING 1 -s 10.8.0.0/24 -o $NIC -j MASQUERADE
+iptables -t nat -I POSTROUTING 1 -s 10.134.0.0/16 -o $NIC -j MASQUERADE
 iptables -I INPUT 1 -i tun0 -j ACCEPT
 iptables -I FORWARD 1 -i $NIC -o tun0 -j ACCEPT
 iptables -I FORWARD 1 -i tun0 -o $NIC -j ACCEPT
@@ -980,7 +996,7 @@ ip6tables -I INPUT 1 -i $NIC -p $PROTOCOL --dport $PORT -j ACCEPT" >>/etc/iptabl
 
 	# Script to remove rules
 	echo "#!/bin/sh
-iptables -t nat -D POSTROUTING -s 10.8.0.0/24 -o $NIC -j MASQUERADE
+iptables -t nat -D POSTROUTING -s 10.134.0.0/16 -o $NIC -j MASQUERADE
 iptables -D INPUT -i tun0 -j ACCEPT
 iptables -D FORWARD -i $NIC -o tun0 -j ACCEPT
 iptables -D FORWARD -i tun0 -o $NIC -j ACCEPT
@@ -1030,7 +1046,7 @@ WantedBy=multi-user.target" >/etc/systemd/system/iptables-openvpn.service
 	elif [[ $PROTOCOL == 'tcp' ]]; then
 		echo "proto tcp-client" >>/etc/openvpn/client-template.txt
 	fi
-	echo "remote $IP $PORT
+	echo "remote $IP $PUBLIC_PORT
 dev tun
 resolv-retry infinite
 nobind
@@ -1044,13 +1060,17 @@ cipher $CIPHER
 tls-client
 tls-version-min 1.2
 tls-cipher $CC_CIPHER
-ignore-unknown-option block-outside-dns
-setenv opt block-outside-dns # Prevent Windows 10 DNS leak
+#ignore-unknown-option block-outside-dns
+#setenv opt block-outside-dns # Prevent Windows 10 DNS leak
 verb 3" >>/etc/openvpn/client-template.txt
 
 	if [[ $COMPRESSION_ENABLED == "y" ]]; then
 		echo "compress $COMPRESSION_ALG" >>/etc/openvpn/client-template.txt
 	fi
+
+	# Generate the custom client.ovpn
+	echo -e "/var/log/openvpn/* {" > /etc/logrotate.d/openvpn &&
+	echo -e "\tsize 1M\n\trotate 5\n\tcompress\n\tmissingok\n\tnotifempty\n\tcreate 644 root root\n}" >> /etc/logrotate.d/openvpn;
 
 	# Generate the custom client.ovpn
 	newClient
@@ -1073,7 +1093,7 @@ function newClient() {
 	echo "   2) Use a password for the client"
 
 	until [[ $PASS =~ ^[1-2]$ ]]; do
-		read -rp "Select an option [1-2]: " -e -i 1 PASS
+		read -rp "Select an option [1-2]: " -e -i 2 PASS
 	done
 
 	CLIENTEXISTS=$(tail -n +2 /etc/openvpn/easy-rsa/pki/index.txt | grep -c -E "/CN=$CLIENT\$")
@@ -1103,13 +1123,13 @@ function newClient() {
 		# if not, use SUDO_USER
 		if [ "${SUDO_USER}" == "root" ]; then
 			# If running sudo as root
-			homeDir="/root"
+			homeDir="/etc/openvpn/client"
 		else
 			homeDir="/home/${SUDO_USER}"
 		fi
 	else
 		# if not SUDO_USER, use /root
-		homeDir="/root"
+		homeDir="/etc/openvpn/client"
 	fi
 
 	# Determine if we use tls-auth or tls-crypt
@@ -1228,8 +1248,8 @@ function removeUnbound() {
 
 function removeOpenVPN() {
 	echo ""
-	read -rp "Do you really want to remove OpenVPN? [y/n]: " -e -i n REMOVE
-	if [[ $REMOVE == 'y' ]]; then
+	read -rp "Pour supprimer OpenVPN, tapez 'supprimer openvpn': " CONFIRMATION
+	if [[ $CONFIRMATION == "supprimer openvpn" ]]; then
 		# Get OpenVPN port from the configuration
 		PORT=$(grep '^port ' /etc/openvpn/server.conf | cut -d " " -f 2)
 		PROTOCOL=$(grep '^proto ' /etc/openvpn/server.conf | cut -d " " -f 2)
@@ -1333,8 +1353,33 @@ function manageMenu() {
 	esac
 }
 
+# Fonction pour sauvegarder le dossier /etc/openvpn/
+function backupOpenVPN() {
+    local backupFileName="/backup/openvpn_backup_$(date +%Y%m%d_%H%M%S).tar.gz"
+    if [[ -d /etc/openvpn/ ]]; then
+		echo
+        echo "Sauvegarde du dossier /etc/openvpn/ en cours..."
+        # Se déplace dans le répertoire /etc pour éviter l'avertissement
+        pushd /etc > /dev/null
+        # Crée l'archive en utilisant le chemin relatif
+        tar -czf "$backupFileName" openvpn/
+        # Retourne au répertoire précédent
+        popd > /dev/null
+        echo "Sauvegarde terminée: $backupFileName"
+		echo
+    else
+		echo
+        echo "Le dossier /etc/openvpn/ n'existe pas, pas de sauvegarde nécessaire."
+		echo
+    fi
+}
+
 # Check for root, TUN, OS...
 initialCheck
+
+
+# Sauvegarde du dossier /etc/openvpn/
+backupOpenVPN
 
 # Check if OpenVPN is already installed
 if [[ -e /etc/openvpn/server.conf && $AUTO_INSTALL != "y" ]]; then
