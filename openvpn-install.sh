@@ -1073,9 +1073,11 @@ verb 3" >>/etc/openvpn/client-template.txt
 	echo -e "/var/log/openvpn/* {" > /etc/logrotate.d/openvpn &&
 	echo -e "\tsize 1M\n\trotate 5\n\tcompress\n\tmissingok\n\tnotifempty\n\tcreate 644 root root\n}" >> /etc/logrotate.d/openvpn;
 
+	echo "If you want to add clients, you simply need to run this script another time ! (./openvpn-install.sh)"
+
 	# Generate the custom client.ovpn
-	newClient
-	echo "If you want to add more clients, you simply need to run this script another time!"
+	#newClient
+	#echo "If you want to add more clients, you simply need to run this script another time!"
 }
 
 function newClient() {
