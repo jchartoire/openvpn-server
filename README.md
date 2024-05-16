@@ -33,7 +33,7 @@ nano /etc/openvpn/server.conf
 ```
 
 ```ini
-#push "dhcp-option DNS 192.168.x.254"
+push "dhcp-option DNS 192.168.x.254"
 #push "redirect-gateway def1 bypass-dhcp"
 push "route 192.168.x.0 255.255.255.0"
 ```
