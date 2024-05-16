@@ -19,7 +19,7 @@ Téléchargez et exécutez le script d'installation (assurez-vous d’avoir les 
 
 ```bash
 cd /root/
-curl -O https://raw.githubusercontent.com/jchartoire/openvpn-server/main/openvpn-install.sh
+curl -O https://raw.githubusercontent.com/jchartoire/openvpn-server/master/openvpn-install.sh
 chmod +x openvpn-install.sh
 ./openvpn-install.sh
 ```
